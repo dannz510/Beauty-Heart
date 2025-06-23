@@ -6,11 +6,9 @@
     <title>Gửi em, Trần Gia Linh</title>
     <!-- Link to your custom style.css -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- No Three.js library imports needed as 3D is removed -->
 </head>
 <body>
-    <!-- The 2D canvas for your original pulsing heart animation -->
+    <!-- The 2D canvas for your pulsing heart animation -->
     <!-- It will initially be hidden by CSS and then faded in after the text. -->
     <canvas id="heart2D"></canvas>
 
@@ -31,9 +29,9 @@
         </div>
     </div>
 
-    <!-- Link to the combined script.js for 2D animation and text logic -->
-    <!-- The type="module" attribute is no longer strictly necessary without Three.js modules,
-         but keeping it doesn't harm and can be useful for future modularity. -->
+    <!-- Link to the script.js for 2D animation and text logic -->
+    <!-- This script tag should be placed at the very end of the body
+         to ensure all HTML elements are loaded before the script tries to access them. -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
