@@ -101,6 +101,7 @@ function init3DScene() {
         // Scene setup: The container for all 3D objects, lights, and cameras.
         scene3D = new THREE.Scene();
         scene3D.background = new THREE.Color(0x000000); // Set a solid black background for the 3D scene.
+        // scene3D.environment = v; // Removed: This was causing errors as 'v' (environment map) is not loaded or defined in this setup.
         console.log("3D Scene created.");
 
         // Renderer setup: Handles rendering the 3D scene to the canvas.
@@ -219,16 +220,17 @@ function init3DScene() {
 
         // Create the main central heart (a larger version of the instanced hearts).
         let mainHeartGeometry3D = mergedInstancedHeartGeometry.clone();
+        // FIX: Corrected typo from mainHeartGeometry33D to mainHeartGeometry3D
         mainHeartGeometry3D.scale(10, 10, 10); // Scale it up significantly.
         let mainHeartColorMaterial3D = heartMaterial3D.clone(); // Clone material to change its color.
         mainHeartColorMaterial3D.color.set("red"); // Set main heart to bright red.
         mainHeartMesh3D = new THREE.Mesh(mainHeartGeometry3D, mainHeartColorMaterial3D);
         mainHeartMesh3D.name = "heart3D"; // Assign a name for identification.
         
-        // --- FIX: Ensure 3D meshes are visible ---
-        mainHeartMesh3D.visible = true; // Make the main 3D heart visible
+        // Ensure 3D meshes are visible based on user's request
+        mainHeartMesh3D.visible = false; // User requested to hide the central 3D heart, keeping 2D as main
         instancedHeartMesh.visible = true; // Make the instanced 3D hearts visible
-        // --- END FIX ---
+        
 
         scene3D.add(mainHeartMesh3D);
         console.log("Main 3D heart created and added to scene.");
@@ -411,7 +413,7 @@ function init2DHeart() {
     // Function to calculate the position of a point on a heart shape using parametric equations.
     var heartPosition = function (rad) {
         return [
-            16 * Math.pow(Math.sin(rad), 3),
+            Math.pow(Math.sin(rad), 3),
             -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))
         ];
     };
@@ -436,9 +438,10 @@ function init2DHeart() {
 
     // Generate points for three nested heart shapes with different scales, creating a layered effect.
     heartPointsOrigin = []; // Clear and re-populate the global heartPointsOrigin array.
-    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 15, 15, 0, 0));
-    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 10, 10, 0, 0));
-    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 5, 5, 0, 0));
+    // Applying the specific scales as per your original 2D heart CodePen
+    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 210, 13, 0, 0));
+    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 150, 9, 0, 0));
+    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 90, 5, 0, 0));
     heartPointsCount2D = heartPointsOrigin.length; // Update the global count.
 
     var targetPoints2D = []; // Stores the current target positions for 2D particles.
@@ -521,7 +524,7 @@ function init2DHeart() {
             u.trace[0].y += u.vy;
             u.vx *= u.force; // Apply damping.
             u.vy *= u.force;
-            // Update the rest of the trace points, making them follow the head.
+            // Update the rest of the particle's trace, making them follow the head.
             for (let k = 0; k < u.trace.length - 1;) {
                 var T = u.trace[k];
                 var N = u.trace[++k];
