@@ -1,3 +1,6 @@
+// --- GLOBAL SCRIPT START DIAGNOSTIC ---
+console.log("Script started executing!"); // This will confirm if the script file itself is loading.
+
 // THREE.JS IMPORTS (for 3D heart globe)
 import * as THREE from "three";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
