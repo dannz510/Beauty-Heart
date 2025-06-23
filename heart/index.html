@@ -7,7 +7,9 @@
     <!-- Link to your custom style.css -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- Three.js Library Imports (from CodePen) -->
+    <!-- Three.js Library Imports -->
+    <!-- These polyfills and importmaps are crucial for modern JS module loading.
+         They enable the use of 'import' statements in script.js for Three.js modules. -->
     <script async src="https://ga.jspm.io/npm:es-module-shims@1.6.3/dist/es-module-shims.js" crossorigin="anonymous"></script>
     <script type="importmap">
         {
@@ -21,13 +23,16 @@
     </script>
 </head>
 <body>
-    <!-- The 3D Three.js canvas for the heart globe (background) -->
+    <!-- The 3D Three.js canvas for the heart globe (intended as background layer) -->
+    <!-- It will initially be hidden by CSS and then faded in via JavaScript. -->
     <canvas id="heart3D"></canvas>
 
-    <!-- The 2D canvas for your original heart animation (foreground) -->
+    <!-- The 2D canvas for your original pulsing heart animation (middle layer) -->
+    <!-- It will also be hidden initially and then faded in after the text. -->
     <canvas id="heart2D"></canvas>
 
     <!-- Container for the animated text messages -->
+    <!-- This div acts as the topmost layer, ensuring the text is always visible over the hearts. -->
     <div class="sp-container">
         <div class="sp-content">
             <h2 class="frame-1">Gửi em</h2>
@@ -43,6 +48,8 @@
     </div>
 
     <!-- Link to the combined script.js for both 2D and 3D animation logic -->
+    <!-- The type="module" attribute is essential for the browser to correctly
+         parse and execute the ES Module imports within script.js. -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
