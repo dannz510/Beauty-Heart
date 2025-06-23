@@ -3,7 +3,7 @@ const TEXT_APPEAR_DELAY = 1500; // Delay before text starts appearing (ms)
 const TEXT_FRAME_INTERVAL = 2000; // Interval between each text frame (ms)
 const LAST_TEXT_FRAME_DURATION = 3000; // Duration for the last text frame, including word by word (ms)
 
-let heart2DCanvas;
+let heart2DCanvas = null; // Initialize to null; will be assigned in DOMContentLoaded
 let textContainer;
 let textFrames;
 
@@ -24,8 +24,7 @@ let is2DHeartRunning = false;
 
 // --- Helper Functions ---
 
-// Detect if the device is mobile (from original 2D heart code)
-// This is used for scaling the 2D heart canvas size.
+// Detect if the device is mobile. This is used for scaling the 2D heart canvas size.
 window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
 
 
@@ -34,8 +33,14 @@ window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera min
 function init2DHeart() {
     if (is2DHeartRunning) return; // Prevent multiple initializations if already running
 
-    heart2DCanvas = document.getElementById('heart2D');
-    ctx2D = heart2DCanvas.getContext('2d');
+    // heart2DCanvas is now assigned directly in DOMContentLoaded.
+    // We'll add a safety check here, though it should ideally be assigned.
+    if (!heart2DCanvas) {
+        console.error("Error: heart2DCanvas element is null. Cannot initialize 2D heart.");
+        return;
+    }
+    
+    ctx2D = heart2DCanvas.getContext('2d'); // This is the line that was causing the error if heart2DCanvas was null.
 
     // Make the 2D heart canvas visible by fading in its opacity
     heart2DCanvas.style.opacity = 1;
@@ -234,9 +239,16 @@ function animateText() {
 // This function runs once the HTML document has been completely loaded and parsed.
 document.addEventListener('DOMContentLoaded', () => {
     // Get references to the HTML elements that will be animated
-    heart2DCanvas = document.getElementById('heart2D'); // The 2D heart canvas
+    heart2DCanvas = document.getElementById('heart2D'); // <--- Canvas element is now fetched here.
     textContainer = document.querySelector('.sp-container'); // The container holding all text elements
     textFrames = document.querySelectorAll('.sp-content h2'); // All individual text lines
+
+    // Critical check: Ensure the canvas element was found
+    if (!heart2DCanvas) {
+        console.error("Critical Error: 'heart2D' canvas element not found in the DOM. Please check your index.html.");
+        // If the canvas isn't found, stop execution to prevent further errors.
+        return;
+    }
 
     // Set initial CSS states for elements to be hidden or in their starting positions.
     // These states are primarily controlled by CSS, but explicit setting here ensures consistency.
