@@ -3,35 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gửi em, Trần Gia Linh</title>
-    <!-- Link to your custom style.css -->
+    <title>For Trần Gia Linh 💗</title>
+    <!-- Tailwind CSS CDN for general styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Link to the external style.css file -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <!-- The 2D canvas for your pulsing heart animation -->
-    <!-- It will initially be hidden by CSS and then faded in after the text. -->
-    <canvas id="heart2D"></canvas>
+<body class="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+    <!-- The canvas element where the heart animation will be drawn -->
+    <canvas id="heart" class="shadow-lg"></canvas>
 
-    <!-- Container for the animated text messages -->
-    <!-- This div acts as the topmost layer, ensuring the text is always visible over the heart. -->
-    <div class="sp-container">
-        <div class="sp-content">
-            <!-- Each h2 will appear sequentially -->
-            <h2 class="frame-1">Gửi em</h2>
-            <h2 class="frame-2">Người con gái</h2>
-            <h2 class="frame-3">Mà Anh Thương Nhớ</h2>
-            <h2 class="frame-4">yêu em</h2>
-            <h2 class="frame-5">
-                <span>Trần</span>
-                <span>Gia</span>
-                <span>Linh</span>
-            </h2>
-        </div>
-    </div>
-
-    <!-- Link to the script.js for 2D animation and text logic -->
-    <!-- This script tag should be placed at the very end of the body
-         to ensure all HTML elements are loaded before the script tries to access them. -->
-    <script type="module" src="script.js"></script>
+    <!-- Link to the external script.js file -->
+    <script src="script.js"></script>
 </body>
 </html>
