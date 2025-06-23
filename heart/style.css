@@ -1,35 +1,87 @@
+/* Import a lovely font for the text */
 @import url("https://fonts.googleapis.com/css2?family=Asap&display=swap");
+
+/* Reset basic browser styles */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
+
+/* Ensure html and body take up full viewport and prevent accidental scrolling */
 html,
 body {
-  /*
-  background: hsl(320deg, 100%, 11%);
-*/
-  overscroll-behavior-x: none;
-  overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: none;
+    width: 100vw;
+    height: 100vh;
+    font-family: "Asap", sans-serif; /* Apply the imported font */
+    color: #fff; /* Default text color for the body */
+    text-align: center;
+    overflow: hidden; /* Hide scrollbars */
+    /* Beautiful gradient background for the whole page */
+    background: radial-gradient(
+        circle farthest-corner,
+        hsl(320deg, 100%, 11%),
+        hsl(320deg, 100%, 5%) 100%
+    );
 }
-body {
-  font-family: "Asap", sans-serif;
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  text-align: center;
-  overflow-x: hidden;
-  background: radial-gradient(
-    circle farthest-corner,
-    hsl(320deg, 100%, 11%),
-    hsl(320deg, 100%, 5%) 100%
-  );
+
+/* Styles for the 2D canvas to cover the full screen */
+#heart2D {
+    position: fixed; /* Fixed position relative to the viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Background layer now */
+    background-color: rgba(0, 0, 0, 0.2); /* Semi-transparent overlay for 2D heart */
+    opacity: 0; /* Initially hidden */
+    transition: opacity 1s ease-in-out; /* Smooth fade-in effect */
 }
-canvas {
-  position: absolute;
-  left:0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,.2);
+
+/* Styles for the text container */
+.sp-container {
+    position: absolute; /* Position relative to the body */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the container */
+    z-index: 1; /* Topmost layer, over the heart */
+    width: 90%; /* Responsive width */
+    max-width: 800px; /* Max width for larger screens */
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0; /* Initially hidden */
+    transition: opacity 1s ease-in-out; /* Smooth fade-in for the container itself */
+}
+
+/* Styles for individual text frames */
+.sp-content h2 {
+    font-size: clamp(1.5em, 5vw, 3em); /* Responsive font size */
+    margin: 0 0 10px 0; /* Space between lines */
+    padding: 0;
+    opacity: 0; /* Initially hidden */
+    transform: translateY(20px); /* Slight initial offset for a subtle slide-up effect */
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out; /* Smooth transition for text appearance */
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.7), 0 0 20px rgba(255, 0, 0, 0.5); /* Red glowing text effect */
+}
+
+/* Animation for the text frames */
+.sp-content h2.active {
+    opacity: 1; /* Make visible */
+    transform: translateY(0); /* Move to original position */
+}
+
+/* Specific styles for the last frame (Trần Gia Linh) */
+.sp-content h2.frame-5 {
+    display: flex; /* Use flexbox for horizontal alignment of spans */
+    justify-content: center; /* Center the spans horizontally */
+    gap: 15px; /* Space between words */
+}
+
+.sp-content h2.frame-5 span {
+    display: inline-block; /* Each word is a block for individual animation */
+    opacity: 0; /* Initially hidden */
+    transform: translateY(20px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
