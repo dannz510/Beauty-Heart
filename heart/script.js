@@ -31,7 +31,10 @@ window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera min
 // --- 2D Heart Animation Functions ---
 
 function init2DHeart() {
-    if (is2DHeartRunning) return; // Prevent multiple initializations if already running
+    if (is2DHeartRunning) {
+        console.log("2D Heart animation already running, skipping initialization.");
+        return; // Prevent multiple initializations if already running
+    }
 
     // heart2DCanvas is now assigned directly in DOMContentLoaded.
     // We'll add a safety check here, though it should ideally be assigned.
@@ -42,6 +45,7 @@ function init2DHeart() {
     
     ctx2D = heart2DCanvas.getContext('2d'); // This is the line that was causing the error if heart2DCanvas was null.
 
+    console.log("Initializing 2D Heart. Canvas opacity will be set to 1.");
     // Make the 2D heart canvas visible by fading in its opacity
     heart2DCanvas.style.opacity = 1;
 
@@ -100,10 +104,12 @@ function init2DHeart() {
     // Start the 2D animation loop
     animate2DHeart();
     is2DHeartRunning = true; // Set flag to indicate 2D heart animation is active
+    console.log("2D Heart animation started.");
 }
 
 // Handler for window resize events, updates 2D canvas dimensions
 function onWindowResize2D() {
+    console.log("Resizing 2D Canvas.");
     const mobile = window.isDevice;
     const koef = mobile ? 0.5 : 1;
     width2D = heart2DCanvas.width = koef * innerWidth;
@@ -194,17 +200,20 @@ function animate2DHeart() {
 // --- Text Animation Functions ---
 
 function animateText() {
+    console.log("Starting text animation.");
     let currentFrameIndex = 0;
     const textFrames = document.querySelectorAll('.sp-content h2');
     const lastFrameSpans = document.querySelectorAll('.sp-content h2.frame-5 span');
 
     // Make the entire text container visible with a fade-in effect
     textContainer.style.opacity = 1;
+    console.log("Text container opacity set to 1.");
 
     // Function to show the next text frame in sequence
     const showNextFrame = () => {
         if (currentFrameIndex < textFrames.length) {
             const currentFrame = textFrames[currentFrameIndex];
+            console.log(`Showing frame: "${currentFrame.textContent.trim()}" (Index: ${currentFrameIndex})`);
             currentFrame.classList.add('active'); // Add 'active' class to trigger CSS animation (fade-in, slide-up)
 
             // Special handling for the last text frame, "Trần Gia Linh", to show words one by one
@@ -212,11 +221,13 @@ function animateText() {
                 let spanIndex = 0;
                 const showNextSpan = () => {
                     if (spanIndex < lastFrameSpans.length) {
+                        console.log(`Showing word: "${lastFrameSpans[spanIndex].textContent.trim()}" (Index: ${spanIndex})`);
                         lastFrameSpans[spanIndex].classList.add('active'); // Activate individual word animation
                         spanIndex++;
                         // Calculate delay for each word to spread evenly across the total duration
                         setTimeout(showNextSpan, LAST_TEXT_FRAME_DURATION / lastFrameSpans.length);
                     } else {
+                        console.log("All text frames shown. Waiting to start 2D heart.");
                         // After all words are shown, initiate the 2D heart animation
                         // A small delay (1000ms) provides a brief pause before the heart appears
                         setTimeout(init2DHeart, 1000);
@@ -238,16 +249,34 @@ function animateText() {
 // --- Main Initialization on DOM Content Loaded ---
 // This function runs once the HTML document has been completely loaded and parsed.
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOMContentLoaded fired! Attempting to get elements...");
+
     // Get references to the HTML elements that will be animated
-    heart2DCanvas = document.getElementById('heart2D'); // <--- Canvas element is now fetched here.
+    heart2DCanvas = document.getElementById('heart2D'); // <--- Canvas element is fetched here.
     textContainer = document.querySelector('.sp-container'); // The container holding all text elements
     textFrames = document.querySelectorAll('.sp-content h2'); // All individual text lines
 
     // Critical check: Ensure the canvas element was found
     if (!heart2DCanvas) {
-        console.error("Critical Error: 'heart2D' canvas element not found in the DOM. Please check your index.html.");
+        console.error("Critical Error: 'heart2D' canvas element not found in the DOM. Please check your index.html. Script will not proceed.");
         // If the canvas isn't found, stop execution to prevent further errors.
         return;
+    } else {
+        console.log("heart2D canvas found:", heart2DCanvas);
+    }
+
+    if (!textContainer) {
+        console.error("Critical Error: '.sp-container' element not found. Script will not proceed.");
+        return;
+    } else {
+        console.log(".sp-container found:", textContainer);
+    }
+
+    if (textFrames.length === 0) {
+        console.error("Critical Error: No 'h2' text frames found within '.sp-content'. Script will not proceed.");
+        return;
+    } else {
+        console.log(`${textFrames.length} text frames found.`);
     }
 
     // Set initial CSS states for elements to be hidden or in their starting positions.
@@ -263,6 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
         span.style.opacity = 0; // Each word invisible
         span.style.transform = 'translateY(20px)'; // Each word slightly off-screen (below)
     });
+    console.log("Initial element opacities set to 0. Starting text animation.");
+
 
     // Start the text animation sequence. This is the first animation to play.
     animateText();
