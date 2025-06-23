@@ -1,149 +1,154 @@
-/* Import Google Fonts for the Barlow typeface */
+/* Import Google Fonts for the Barlow typeface (for text) and Asap (for overall style) */
 @import url('https://fonts.googleapis.com/css?family=Barlow');
-@import url("https://fonts.googleapis.com/css2?family=Asap&display=swap"); /* For 3D heart style */
+@import url("https://fonts.googleapis.com/css2?family=Asap&display=swap");
 
+/* Reset basic margins and padding, set box-sizing for all elements */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 /* Base html and body styles for full viewport coverage and default font */
 html, body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Prevent scrolling */
-    font-family: 'Barlow', "Asap", sans-serif; /* Prioritize Barlow, fallback to Asap */
-    /* Romantic radial gradient background for the body */
+    height: 100%; /* Ensure html and body take full height of the viewport */
+    width: 100%;  /* Ensure html and body take full width of the viewport */
+    overflow: hidden; /* Prevent any scrolling behavior */
+    overscroll-behavior-x: none; /* Disable horizontal overscroll bounce */
+    overscroll-behavior-y: none; /* Disable vertical overscroll bounce */
+    font-family: 'Barlow', "Asap", sans-serif; /* Prioritize Barlow, fallback to Asap, then generic sans-serif */
+    /* Apply a subtle radial gradient background to the body for a romantic depth effect */
     background: radial-gradient(
         circle farthest-corner,
-        hsl(320deg, 100%, 11%),
-        hsl(320deg, 100%, 5%) 100%
+        hsl(320deg, 100%, 11%), /* Dark magenta/purple in the center */
+        hsl(320deg, 100%, 5%) 100% /* Even darker magenta/purple towards edges */
     );
 }
 
-/* 3D Canvas styling (background layer) */
+/* 3D Canvas styling (Background Layer) */
 canvas#heart3D {
-    position: absolute;
+    position: absolute; /* Position relative to the nearest positioned ancestor (body in this case) */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    z-index: 1; /* Background layer */
-    display: block;
-    opacity: 0; /* Initially hidden */
-    transition: opacity 1s ease-in; /* Smooth fade-in when visible */
+    z-index: 1; /* Lowest visual layer among interactive elements */
+    display: block; /* Ensures canvas behaves as a block element */
+    opacity: 0; /* Initially hidden, will fade in via JavaScript */
+    transition: opacity 1s ease-in; /* Smooth transition for the fade-in effect */
 }
 
-/* 2D Canvas styling (foreground layer, visible after 3D loads) */
+/* 2D Canvas styling (Middle Layer) */
 canvas#heart2D {
-    position: absolute;
+    position: absolute; /* Position relative to the nearest positioned ancestor (body) */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    z-index: 2; /* Layer above 3D heart, but below text */
-    display: block;
-    opacity: 0; /* Initially hidden */
-    transition: opacity 1s ease-in; /* Smooth fade-in */
+    z-index: 2; /* Layer above the 3D heart, but below the text */
+    display: block; /* Ensures canvas behaves as a block element */
+    opacity: 0; /* Initially hidden, will fade in via JavaScript */
+    transition: opacity 1s ease-in; /* Smooth transition for the fade-in effect */
 }
 
-
-/* Class to make the canvas visible after loading (applied by JS) */
+/* Class applied by JavaScript to make canvases visible */
 canvas.canvas-visible {
-    opacity: 1;
+    opacity: 1; /* Fully opaque */
 }
 
-/* Main container for the text overlay, covering the entire viewport */
+/* Main container for the animated text messages (Topmost Layer) */
 .sp-container {
-    position: fixed; /* Fixed to viewport */
+    position: fixed; /* Fixed to the viewport, stays in place during scroll (though scrolling is disabled here) */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 10; /* IMPORTANT: This container and its text must be above both canvases */
+    z-index: 10; /* Highest visual layer, ensures text is always on top */
 }
 
 /* Content wrapper for the text, centered within the container */
 .sp-content {
-    position: absolute;
+    position: absolute; /* Position relative to its parent, .sp-container */
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Centering using transform */
-    width: 90%; /* Responsive width for the text block */
-    max-width: 600px; /* Max width to prevent text from being too wide on large screens */
-    height: auto; /* Height adapts to content */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Center vertically within its own bounds */
-    align-items: center; /* Center horizontally */
-    z-index: 1000; /* Ensures text content is on top of everything else */
-    pointer-events: none; /* Allows mouse events to pass through to elements beneath */
-    filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.7)); /* Stronger glow for text */
+    transform: translate(-50%, -50%); /* Centers the element perfectly using CSS transforms */
+    width: 90%; /* Responsive width, takes 90% of parent width */
+    max-width: 600px; /* Limits max width on very large screens for better readability */
+    height: auto; /* Height adapts to its content */
+    display: flex; /* Uses Flexbox for internal layout */
+    flex-direction: column; /* Stacks children vertically */
+    justify-content: center; /* Centers children vertically within the flex container */
+    align-items: center; /* Centers children horizontally within the flex container */
+    z-index: 1000; /* Ensures text content is on top of everything else (higher than .sp-container) */
+    pointer-events: none; /* Allows mouse events to pass through this element to elements beneath (e.g., for 3D interaction) */
+    filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.7)); /* Applies a soft, pink glow effect to the text */
 }
 
-/* General styles for the animated heading elements */
+/* General styles for the animated heading elements (each line of text) */
 .sp-container h2 {
-    position: relative;
-    line-height: 1.2em;
+    position: relative; /* Allows z-index and transformations to apply correctly to individual lines */
+    line-height: 1.2em; /* Adjusted for better vertical spacing between lines */
     margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 30px;
-    width: 100%;
-    text-align: center;
-    color: #fce4ec; /* Light pink for visibility */
+    margin-bottom: 10px; /* Small gap below each line of text */
+    font-size: 30px; /* Base font size for desktop */
+    width: 100%; /* Ensures text takes full width of its parent for centering */
+    text-align: center; /* Centers the text horizontally */
+    color: #fce4ec; /* Light pink color for the text */
     opacity: 0; /* Hidden by default for animation */
-    animation-fill-mode: forwards; /* Keep the last keyframe state */
-    /* Using fadeInScaleUp for all frames to ensure text remains visible */
+    animation-fill-mode: forwards; /* Keeps the last keyframe state after animation completes */
+    /* Applies a fade-in and slight scale-up animation */
     -webkit-animation: fadeInScaleUp 1.5s ease-out backwards;
     -moz-animation: fadeInScaleUp 1.5s ease-out backwards;
     -ms-animation: fadeInScaleUp 1.5s ease-out backwards;
     animation: fadeInScaleUp 1.5s ease-out backwards;
 }
 
-/* Specific animation delays for each text frame */
+/* Specific animation delays for each text frame to appear sequentially */
 .sp-container h2.frame-1 { animation-delay: 0s; } /* Text starts immediately */
 .sp-container h2.frame-2 { animation-delay: 2s; }
 .sp-container h2.frame-3 { animation-delay: 4s; }
 .sp-container h2.frame-4 { animation-delay: 6s; }
-.sp-container h2.frame-5 { animation-delay: 8s; } /* This is the last text animation start */
+.sp-container h2.frame-5 { animation-delay: 8s; } /* This is the last main text animation start */
 
-/* Animation for individual words/spans within frame-5 */
+/* Animation for individual words/spans within frame-5 (the name) */
 .sp-container h2.frame-5 span {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(20px);
-    animation-fill-mode: forwards;
-    animation: fadeInSlideUp 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-    margin: 0 5px;
+    display: inline-block; /* Essential for individual word animation (allows transform, opacity, margin) */
+    opacity: 0; /* Hidden by default */
+    transform: translateY(20px); /* Starts slightly below its final position */
+    animation-fill-mode: forwards; /* Keeps final state */
+    animation: fadeInSlideUp 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; /* Springy slide-up effect */
+    margin: 0 5px; /* Small spacing between words */
 }
-/* Additional delays for subsequent spans in frame-5 */
+/* Additional delays for subsequent spans in frame-5 to appear one by one */
 .sp-container h2.frame-5 span:nth-child(1) { animation-delay: 8.2s; }
 .sp-container h2.frame-5 span:nth-child(2) { animation-delay: 8.5s; }
 .sp-container h2.frame-5 span:nth-child(3) { animation-delay: 8.8s; }
 
-/* Keyframe animations for text */
+/* Keyframe animations definitions */
 @keyframes fadeInScaleUp {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
+    0% { opacity: 0; transform: scale(0.8); } /* Starts transparent and slightly smaller */
+    100% { opacity: 1; transform: scale(1); } /* Ends opaque and normal size */
 }
 
 @keyframes fadeInSlideUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% { opacity: 0; transform: translateY(20px); } /* Starts transparent and lower */
+    100% { opacity: 1; transform: translateY(0); } /* Ends opaque and at original position */
 }
 
-/* Media queries for smaller screens */
+/* Media queries for responsive design */
 @media (max-width: 768px) {
     .sp-container h2 {
-        font-size: 24px;
+        font-size: 24px; /* Smaller font for tablets */
         line-height: 1.3em;
     }
 }
 
 @media (max-width: 480px) {
     .sp-container h2 {
-        font-size: 18px;
+        font-size: 18px; /* Even smaller for mobile phones */
         line-height: 1.4em;
     }
     .sp-container h2.frame-5 span {
-        margin: 0 3px;
+        margin: 0 3px; /* Reduce spacing on mobile for words */
     }
 }
