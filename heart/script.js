@@ -224,8 +224,12 @@ function init3DScene() {
         mainHeartColorMaterial3D.color.set("red"); // Set main heart to bright red.
         mainHeartMesh3D = new THREE.Mesh(mainHeartGeometry3D, mainHeartColorMaterial3D);
         mainHeartMesh3D.name = "heart3D"; // Assign a name for identification.
-        mainHeartMesh3D.visible = false; // Initially hide the 3D main heart.
-        instancedHeartMesh.visible = false; // Initially hide the 3D instanced hearts.
+        
+        // --- FIX: Ensure 3D meshes are visible ---
+        mainHeartMesh3D.visible = true; // Make the main 3D heart visible
+        instancedHeartMesh.visible = true; // Make the instanced 3D hearts visible
+        // --- END FIX ---
+
         scene3D.add(mainHeartMesh3D);
         console.log("Main 3D heart created and added to scene.");
 
