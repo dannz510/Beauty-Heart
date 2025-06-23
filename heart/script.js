@@ -6,11 +6,81 @@ import * as THREE from "three";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 import { SUBTRACTION as CSG_SUBTRACTION, Brush as CSG_Brush, Evaluator as CSG_Evaluator } from "three-bvh-csg";
 
+// --- GLOBAL UTILITY FUNCTIONS ---
+// Moved randomFloat to global scope to be accessible by all parts of the script.
+function randomFloat(min = 0, max = 1) {
+    return Math.random() * (max - min) + min;
+}
+
+// Ensure requestAnimationFrame is available (polyfill is in main window scope)
+window.requestAnimationFrame =
+    window.__requestAnimationFrame ||
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    (function () {
+        return function (callback, element) {
+            var lastTime = element.__lastTime;
+            if (lastTime === undefined) {
+                lastTime = 0;
+            }
+            var currTime = Date.now();
+            var timeToCall = Math.max(1, 33 - (currTime - lastTime));
+            window.setTimeout(callback, timeToCall);
+            element.__lastTime = currTime + timeToCall;
+        };
+    })();
+
+// Detect if the user is on a mobile device (global)
+window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
+
+
 // --- GLOBAL VARIABLES FOR BOTH ANIMATIONS ---
 let animationTimer = 0; // Unified timer for animation synchronization
 
+
 // --- 3D HEART GLOBE LOGIC ---
-// Moved function out of IIFE to be globally accessible
+let camera3D, scene3D, renderer3D, instancedHeartMesh, mainHeartMesh3D;
+// Three.js object for temporary matrix operations
+const dummyObject = new THREE.Object3D();
+const tempVector3 = new THREE.Vector3();
+const tempEuler = new THREE.Euler();
+const tempQuaternion = new THREE.Quaternion();
+const tempScaleVector = new THREE.Vector3();
+
+// Configuration constants for 3D
+const NUM_INSTANCES = 500;
+const GLOBE_RADIUS = 60;
+const INSTANCE_SCALE_CYCLE_DURATION = 10;
+const INSTANCE_SCALE_AMPLITUDE = 0.15;
+const MAIN_HEART_PULSE_DURATION = 22;
+const MAIN_HEART_PULSE_AMPLITUDE = 0.07;
+const ROTATION_SPEED_X = 0.0025; // Auto-rotation speed
+const ROTATION_SPEED_Y = 0.0015; // Auto-rotation speed
+
+let targetRotationX = 0; // Accumulated target rotation from drag
+let targetRotationY = 0;
+
+// Touch/Mouse event mapping (global, used by 3D)
+const Event = {};
+if ("ontouchstart" in window) {
+    Event.TOUCH_START = "touchstart";
+    Event.TOUCH_MOVE = "touchmove";
+    Event.TOUCH_END = "touchend";
+} else {
+    Event.TOUCH_START = "mousedown";
+    Event.TOUCH_MOVE = "mousemove";
+    Event.TOUCH_END = "mouseup";
+}
+
+// Variables for mouse/touch interaction (global, used by 3D)
+let currentDragX = 0, currentDragY = 0;
+let startDragX = 0, startDragY = 0;
+let initialRotationX = 0, initialRotationY = 0;
+
+// Function to initialize the Three.js scene
 function init3DScene() {
     console.log("init3DScene() started.");
     const canvas3D = document.getElementById('heart3D');
@@ -19,43 +89,6 @@ function init3DScene() {
         return;
     }
     console.log("3D Canvas element found.");
-
-    let camera3D, scene3D, renderer3D, instancedHeartMesh, mainHeartMesh3D;
-
-    // Three.js object for temporary matrix operations
-    const dummyObject = new THREE.Object3D();
-    const tempVector3 = new THREE.Vector3();
-    const tempEuler = new THREE.Euler();
-    const tempQuaternion = new THREE.Quaternion();
-    const tempScaleVector = new THREE.Vector3();
-
-    // Configuration constants
-    const NUM_INSTANCES = 500;
-    const GLOBE_RADIUS = 60;
-
-    // Animation variables for 3D globe
-    let mouseX = 0, mouseY = 0;
-    let prevMouseX = 0, prevMouseY = 0;
-    let targetRotationX = 0, targetRotationY = 0;
-    const ROTATION_SPEED_X = 0.0025;
-    const ROTATION_SPEED_Y = 0.0015;
-    let animationFrameCount3D = 0; // Separate frame counter for 3D animation's internal timing
-    const INSTANCE_SCALE_CYCLE_DURATION = 10;
-    const INSTANCE_SCALE_AMPLITUDE = 0.15;
-    const MAIN_HEART_PULSE_DURATION = 22;
-    const MAIN_HEART_PULSE_AMPLITUDE = 0.07;
-
-    // Touch/Mouse event mapping
-    const Event = {};
-    if ("ontouchstart" in window) {
-        Event.TOUCH_START = "touchstart";
-        Event.TOUCH_MOVE = "touchmove";
-        Event.TOUCH_END = "touchend";
-    } else {
-        Event.TOUCH_START = "mousedown";
-        Event.TOUCH_MOVE = "mousemove";
-        Event.TOUCH_END = "mouseup";
-    }
 
     try {
         // Scene setup
@@ -140,13 +173,13 @@ function init3DScene() {
         const instanceMatrix = new THREE.Matrix4();
         for (let i = 0; i < NUM_INSTANCES; i++) {
             let phi = randomFloat() * Math.PI * 2;
-            let theta = THREE.MathUtils.randInt(-1e3, 1e3) / 1e3;
+            let theta = randomFloat(-1, 1); // Use global randomFloat
             tempVector3.x = 24 * Math.sqrt(1 - theta * theta) * Math.cos(phi);
             tempVector3.y = 24 * Math.sqrt(1 - theta * theta) * Math.sin(phi);
             tempVector3.z = 24 * theta;
-            tempEuler.z = 2 * randomFloat() * Math.PI;
-            tempEuler.y = 2 * randomFloat() * Math.PI;
-            tempEuler.x = 2 * randomFloat() * Math.PI;
+            tempEuler.z = 2 * randomFloat() * Math.PI; // Use global randomFloat
+            tempEuler.y = 2 * randomFloat() * Math.PI; // Use global randomFloat
+            tempEuler.x = 2 * randomFloat() * Math.PI; // Use global randomFloat
             tempQuaternion.setFromEuler(tempEuler);
             tempScaleVector.set(1, 1, 1);
             instanceMatrix.compose(tempVector3, tempQuaternion, tempScaleVector);
@@ -154,9 +187,9 @@ function init3DScene() {
             instancedHeartMesh.setColorAt(
                 i,
                 instanceColor.setHSL(
-                    Math.abs(THREE.MathUtils.randInt(9750, 1e4) / 1e4),
+                    Math.abs(randomFloat(0.975, 1)), // Use global randomFloat
                     1,
-                    THREE.MathUtils.randInt(500, 700) / 1e3
+                    randomFloat(0.5, 0.7) // Use global randomFloat
                 )
             );
         }
@@ -198,11 +231,6 @@ function onWindowResize3D() {
     renderer3D.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Variables for mouse/touch interaction (shared between 3D globe)
-let currentDragX = 0, currentDragY = 0;
-let startDragX = 0, startDragY = 0;
-let initialRotationX = 0, initialRotationY = 0;
-
 // Handle touch/mouse start for interaction
 function onTouchStart(event) {
     event.preventDefault();
@@ -218,8 +246,8 @@ function onTouchStart(event) {
 
     startDragX = clientX;
     startDragY = clientY;
-    initialRotationX = currentDragX;
-    initialRotationY = currentDragY;
+    initialRotationX = targetRotationX; // Use targetRotation as initial when starting drag
+    initialRotationY = targetRotationY;
 
     document.addEventListener(Event.TOUCH_MOVE, onTouchMove, false);
     document.addEventListener(Event.TOUCH_END, onTouchEnd, false);
@@ -238,11 +266,8 @@ function onTouchMove(event) {
         clientY = event.clientY;
     }
 
-    currentDragX = initialRotationX + 0.01 * (clientX - startDragX);
-    currentDragY = initialRotationY + 0.01 * (clientY - startDragY);
-
-    targetRotationX = currentDragX;
-    targetRotationY = currentDragY;
+    targetRotationX = initialRotationX + 0.01 * (clientX - startDragX);
+    targetRotationY = initialRotationY + 0.01 * (clientY - startDragY);
 }
 
 // Handle touch/mouse end for interaction
@@ -255,68 +280,84 @@ function onTouchEnd() {
 function animate3D() {
     requestAnimationFrame(animate3D);
     if (!renderer3D || !scene3D || !camera3D) {
-        console.error("3D Renderer, scene, or camera not initialized. Stopping 3D animate loop.");
-        return;
+        console.error("3D Renderer, scene, or camera not initialized. Stopping animation.");
+        return; // Stop if not initialized
     }
 
-    // Update scaling for instanced hearts
-    let instanceScaleFactorInner = Math.cos(animationFrameCount3D / INSTANCE_SCALE_CYCLE_DURATION + 1) * INSTANCE_SCALE_AMPLITUDE + 1;
-    let instanceScaleFactorOuter = Math.sin(animationFrameCount3D / INSTANCE_SCALE_CYCLE_DURATION + 1) * INSTANCE_SCALE_AMPLITUDE + 1;
-
-    for (let i = 0; i < NUM_INSTANCES; i++) {
-        instancedHeartMesh.getMatrixAt(i, dummyObject.matrix);
-        dummyObject.matrix.decompose(dummyObject.position, dummyObject.quaternion, dummyObject.scale);
-
-        let currentScale = (i % 2 === 0) ?
-            (1 / dummyObject.scale.x) * instanceScaleFactorInner :
-            (1 / dummyObject.scale.x) * instanceScaleFactorOuter;
-        tempScaleVector.set(currentScale, currentScale, currentScale);
-
-        dummyObject.matrix.compose(dummyObject.position, dummyObject.quaternion, tempScaleVector);
-        instancedHeartMesh.setMatrixAt(i, dummyObject.matrix);
+    // Smoothly apply mouse/touch-based rotation
+    if (instancedHeartMesh) {
+        instancedHeartMesh.rotation.y += (targetRotationX - instancedHeartMesh.rotation.y) * 0.05;
+        instancedHeartMesh.rotation.x += (targetRotationY - instancedHeartMesh.rotation.x) * 0.05;
     }
-    instancedHeartMesh.instanceMatrix.needsUpdate = true;
-
-    // Apply rotation from mouse/touch interaction
-    instancedHeartMesh.rotation.y = targetRotationX;
-    instancedHeartMesh.rotation.x = targetRotationY;
 
     // Apply continuous auto-rotation
-    instancedHeartMesh.rotation.x += ROTATION_SPEED_Y;
-    instancedHeartMesh.rotation.z -= ROTATION_SPEED_X;
+    if (instancedHeartMesh) {
+        instancedHeartMesh.rotation.x += ROTATION_SPEED_Y;
+        instancedHeartMesh.rotation.z -= ROTATION_SPEED_X;
+    }
 
-    // Update scaling for the main central heart (pulsing effect)
-    let mainHeartPulseFactor = Math.cos(animationFrameCount3D / MAIN_HEART_PULSE_DURATION + 1) * MAIN_HEART_PULSE_AMPLITUDE + 1;
-    mainHeartMesh3D.scale.set(mainHeartPulseFactor, mainHeartPulseFactor, mainHeartPulseFactor);
+    // Update instance scales for pulsing effect
+    if (instancedHeartMesh) {
+        const time = animationTimer * 0.1; // Use unified timer
+        const tempScale = new THREE.Vector3();
+        for (let i = 0; i < NUM_INSTANCES; i++) {
+            const scaleOffset = Math.sin((time + i * 0.05) * (Math.PI * 2 / INSTANCE_SCALE_CYCLE_DURATION)) * INSTANCE_SCALE_AMPLITUDE;
+            tempScale.setScalar(1 + scaleOffset);
+            const instanceMatrix = new THREE.Matrix4();
+            instancedHeartMesh.getMatrixAt(i, instanceMatrix);
+            const position = new THREE.Vector3();
+            const quaternion = new THREE.Quaternion();
+            const scale = new THREE.Vector3(); // Placeholder for existing scale
+            instanceMatrix.decompose(position, quaternion, scale); // Decompose to get current position/rotation
+            instanceMatrix.compose(position, quaternion, tempScale); // Recompose with new scale
+            instancedHeartMesh.setMatrixAt(i, instanceMatrix);
+        }
+        instancedHeartMesh.instanceMatrix.needsUpdate = true;
+    }
 
-    animationFrameCount3D++;
+    // Animate main heart pulse
+    if (mainHeartMesh3D) { // Check if mainHeartMesh3D is initialized
+        const time = animationTimer * 0.1; // Use unified timer
+        const scale = 1 + Math.sin(time * (Math.PI * 2 / MAIN_HEART_PULSE_DURATION)) * MAIN_HEART_PULSE_AMPLITUDE;
+        mainHeartMesh3D.scale.setScalar(scale);
+    }
+
+    // Render the scene
     renderer3D.render(scene3D, camera3D);
+
+    // Increment the unified animation timer
+    animationTimer++;
 }
 
 
 // --- 2D HEART ANIMATION LOGIC (from your original snippet) ---
-// Moved function out of IIFE to be globally accessible
+let canvas2D, ctx2D; // Make 2D canvas and context global for its functions
+let heartPointsOrigin = []; // Renamed from pointsOrigin to avoid conflict
+let hearts2DParticles = []; // Renamed from 'e' for clarity
+let heartPointsCount2D; // Global variable for 2D heart points count
+let config2D; // Global config for 2D heart
+
 function init2DHeart() {
     console.log("init2DHeart() started.");
 
     var mobile = window.isDevice;
     var koef = mobile ? 0.5 : 1; // Coefficient for 2D canvas size
 
-    var canvas2D = document.getElementById('heart2D');
+    canvas2D = document.getElementById('heart2D'); // Assign to global variable
     if (!canvas2D) {
         console.error("2D Canvas element with ID 'heart2D' not found!");
         return;
     }
-    var ctx = canvas2D.getContext('2d');
+    ctx2D = canvas2D.getContext('2d'); // Assign to global variable
     console.log("2D Canvas element found and context obtained.");
 
     var width = canvas2D.width = koef * window.innerWidth;
     var height = canvas2D.height = koef * window.innerHeight;
 
-    var rand = Math.random;
+    var rand = Math.random; // Local alias for Math.random
 
-    ctx.fillStyle = "rgba(0,0,0,1)"; // Black background for 2D heart
-    ctx.fillRect(0, 0, width, height);
+    ctx2D.fillStyle = "rgba(0,0,0,1)"; // Black background for 2D heart
+    ctx2D.fillRect(0, 0, width, height);
 
     var heartPosition = function (rad) {
         return [
@@ -331,54 +372,56 @@ function init2DHeart() {
     window.addEventListener('resize', function () {
         width = canvas2D.width = koef * window.innerWidth;
         height = canvas2D.height = koef * window.innerHeight;
-        ctx.fillStyle = "rgba(0,0,0,1)";
-        ctx.fillRect(0, 0, width, height);
+        ctx2D.fillStyle = "rgba(0,0,0,1)";
+        ctx2D.fillRect(0, 0, width, height);
         pulse2D((1 + -Math.cos(animationTimer)) * .5, (1 + -Math.cos(animationTimer)) * .5);
     });
 
     var traceCount = mobile ? 20 : 50;
-    var pointsOrigin = [];
-    var i;
+    
+    // Use the global heartPointsOrigin
+    heartPointsOrigin = []; 
     var dr = mobile ? 0.3 : 0.1;
 
     // Adjusted scaling factors (sx, sy) for 2D heart to be proportional and visible
-    for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 15, 15, 0, 0));
-    for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 10, 10, 0, 0));
-    for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 5, 5, 0, 0));
-    var heartPointsCount = pointsOrigin.length;
+    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 15, 15, 0, 0));
+    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 10, 10, 0, 0));
+    for (let j = 0; j < Math.PI * 2; j += dr) heartPointsOrigin.push(scaleAndTranslate(heartPosition(j), 5, 5, 0, 0));
+    heartPointsCount2D = heartPointsOrigin.length; // Assign to global count
 
-    var targetPoints = [];
+    var targetPoints2D = []; // Renamed to avoid conflict
     var pulse2D = function (kx, ky) {
         var pulseAmplitude = 0.1; // Amount of size variation
         var pulseSpeed = 5;       // How fast the pulse cycle is
         var currentPulseFactor = 1 + (Math.sin(animationTimer * pulseSpeed) * pulseAmplitude);
 
-        for (i = 0; i < pointsOrigin.length; i++) {
-            targetPoints[i] = [];
-            targetPoints[i][0] = kx * pointsOrigin[i][0] * currentPulseFactor + width / 2;
-            targetPoints[i][1] = ky * pointsOrigin[i][1] * currentPulseFactor + height / 2;
+        for (let j = 0; j < heartPointsCount2D; j++) {
+            targetPoints2D[j] = [];
+            targetPoints2D[j][0] = kx * heartPointsOrigin[j][0] * currentPulseFactor + width / 2;
+            targetPoints2D[j][1] = ky * heartPointsOrigin[j][1] * currentPulseFactor + height / 2;
         }
     };
 
-    var e = [];
-    for (i = 0; i < heartPointsCount; i++) {
+    // Use the global hearts2DParticles
+    hearts2DParticles = [];
+    for (let j = 0; j < heartPointsCount2D; j++) {
         var x = rand() * width;
         var y = rand() * height;
-        e[i] = {
+        hearts2DParticles[j] = {
             vx: 0,
             vy: 0,
             R: 2,
             speed: rand() + 5,
-            q: ~~(rand() * heartPointsCount),
-            D: 2 * (i % 2) - 1,
+            q: ~~(rand() * heartPointsCount2D),
+            D: 2 * (j % 2) - 1,
             force: 0.2 * rand() + 0.7,
             f: "hsla(0," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.3)",
             trace: []
         };
-        for (var k = 0; k < traceCount; k++) e[i].trace[k] = { x: x, y: y };
+        for (var k = 0; k < traceCount; k++) hearts2DParticles[j].trace[k] = { x: x, y: y };
     }
 
-    var config2D = {
+    config2D = { // Assign to global config2D
         traceK: 0.4,
         timeDelta: 0.01
     };
@@ -387,30 +430,30 @@ function init2DHeart() {
         var n = -Math.cos(animationTimer); // Use global animationTimer
         pulse2D((1 + n) * .5, (1 + n) * .5);
 
-        animationTimer += ((Math.sin(animationTimer)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config2D.timeDelta; // Update global timer
+        // animationTimer is now incremented in animate3D to keep unified timing
 
-        ctx.fillStyle = "rgba(0,0,0,.1)";
-        ctx.fillRect(0, 0, width, height);
+        ctx2D.fillStyle = "rgba(0,0,0,.1)";
+        ctx2D.fillRect(0, 0, width, height);
 
-        for (i = e.length; i--;) {
-            var u = e[i];
-            var q = targetPoints[u.q];
+        for (let j = hearts2DParticles.length; j--;) { // Changed 'i' to 'j' to avoid local 'i' conflict
+            var u = hearts2DParticles[j];
+            var q = targetPoints2D[u.q];
             var dx = u.trace[0].x - q[0];
             var dy = u.trace[0].y - q[1];
             var length = Math.sqrt(dx * dx + dy * dy);
 
             if (10 > length) {
                 if (0.95 < rand()) {
-                    u.q = ~~(rand() * heartPointsCount);
+                    u.q = ~~(rand() * heartPointsCount2D);
                 }
                 else {
                     if (0.99 < rand()) {
                         u.D *= -1;
                     }
                     u.q += u.D;
-                    u.q %= heartPointsCount;
+                    u.q %= heartPointsCount2D;
                     if (0 > u.q) {
-                        u.q += heartPointsCount;
+                        u.q += heartPointsCount2D;
                     }
                 }
             }
@@ -420,15 +463,15 @@ function init2DHeart() {
             u.trace[0].y += u.vy;
             u.vx *= u.force;
             u.vy *= u.force;
-            for (k = 0; k < u.trace.length - 1;) {
+            for (let k = 0; k < u.trace.length - 1;) {
                 var T = u.trace[k];
                 var N = u.trace[++k];
                 N.x -= config2D.traceK * (N.x - T.x);
                 N.y -= config2D.traceK * (N.y - T.y);
             }
-            ctx.fillStyle = u.f;
-            for (k = 0; k < u.trace.length; k++) {
-                ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
+            ctx2D.fillStyle = u.f;
+            for (let k = 0; k < u.trace.length; k++) {
+                ctx2D.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
             }
         }
         window.requestAnimationFrame(loop2D, canvas2D);
