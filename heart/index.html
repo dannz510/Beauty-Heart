@@ -1,11 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Heart Animation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi em, Trần Gia Linh</title>
+    <!-- Link to your custom style.css -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Three.js Library Imports (from CodePen) -->
+    <script async src="https://ga.jspm.io/npm:es-module-shims@1.6.3/dist/es-module-shims.js" crossorigin="anonymous"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/",
+                "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.6.0/build/index.module.js",
+                "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.7/build/index.module.js"
+            }
+        }
+    </script>
 </head>
 <body>
-    <canvas id="heart"></canvas>
-    <script src="script.js"></script>
+    <!-- The 3D Three.js canvas for the heart globe (background) -->
+    <canvas id="heart3D"></canvas>
+
+    <!-- The 2D canvas for your original heart animation (foreground) -->
+    <canvas id="heart2D"></canvas>
+
+    <!-- Container for the animated text messages -->
+    <div class="sp-container">
+        <div class="sp-content">
+            <h2 class="frame-1">Gửi em</h2>
+            <h2 class="frame-2">Người con gái</h2>
+            <h2 class="frame-3">Mà Anh Thương Nhớ</h2>
+            <h2 class="frame-4">yêu em</h2>
+            <h2 class="frame-5">
+                <span>Trần</span>
+                <span>Gia</span>
+                <span>Linh</span>
+            </h2>
+        </div>
+    </div>
+
+    <!-- Link to the combined script.js for both 2D and 3D animation logic -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
